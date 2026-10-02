@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tesla Investment Portfolio | Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #0a0a0a; color: #fff; min-height: 100vh; }
+
+    /* Login */
+    #login-screen {
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+    }
+    .login-box {
+      background: #141414; border: 1px solid #333; border-radius: 16px;
+      padding: 48px 40px; width: 100%; max-width: 420px; text-align: center;
+    }
+    .login-box h1 { font-size: 28px; margin-bottom: 8px; letter-spacing: 1px; }
+    .login-box .sub { color: #888; margin-bottom: 32px; font-size: 14px; }
+    .login-box input {
+      width: 100%; padding: 14px 16px; margin-bottom: 16px;
+      background: #0a0a0a; border: 1px solid #333; border-radius: 8px;
+      color: #fff; font-size: 15px;
+    }
+    .login-box input:focus { outline: none; border-color: #e31937; }
+    .login-box button {
+      width: 100%; padding: 14px; background: #e31937; color: white;
+      border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: 0.2s;
+    }
+    .login-box button:hover { background: #c41230; }
+    .error { color: #ff4d4d; font-size: 13px; margin-top: 12px; display: none; }
+
+    /* Dashboard */
+    #dashboard { display: none; }
+    header {
+      background: #111; border-bottom: 1px solid #222;
+      padding: 16px 32px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .logo { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+    .logo span { color: #e31937; }
+    .user-info { display: flex; align-items: center; gap: 16px; }
+    .logout-btn {
+      background: transparent; border: 1px solid #444; color: #ccc;
+      padding: 8px 16px; border-radius: 6px; cursor: pointer;
+    }
+    .logout-btn:hover { border-color: #e31937; color: #fff; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+    .prices {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px;
+    }
+    .price-card {
+      background: #141414; border: 1px solid #222; border-radius: 12px;
+      padding: 24px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .price-card h3 { font-size: 14px; color: #888; margin-bottom: 4px; }
+    .price-card .value { font-size: 28px; font-weight: 700; }
+    .change { font-size: 14px; margin-top: 4px; }
+    .up { color: #00c853; } .down { color: #ff4d4d; }
+
+    .portfolio-grid {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px;
+    }
+    .card {
+      background: #141414; border: 1px solid #222; border-radius: 12px; padding: 24px;
+    }
+    .card h2 { font-size: 18px; margin-bottom: 20px; }
+    .stat { margin-bottom: 16px; }
+    .stat label { display: block; color: #888; font-size: 13px; margin-bottom: 4px; }
+    .stat .num { font-size: 22px; font-weight: 600; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #222; }
+    th { color: #888; font-size: 13px; font-weight: 500; }
+
+    .support {
+      background: #141414; border: 1px solid #222; border-radius: 12px;
+      padding: 24px; margin-bottom: 32px;
+    }
+    .support a { color: #e31937; text-decoration: none; }
+
+    .disclaimer {
+      background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+      padding: 20px; font-size: 13px; color: #999; line-height: 1.6;
+    }
+    .disclaimer strong { color: #e31937; }
+
+    @media (max-width: 768px) {
+      .prices, .portfolio-grid { grid-template-columns: 1fr; }
+      header { flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h1>TESLA <span style="color:#e31937">PORTFOLIO</span></h1>
+      <p class="sub">Secure Investment Dashboard • Demo</p>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Sign In</button>
+      <p class="error" id="login-error">Invalid username or password</p>
+      <p style="margin-top:24px;font-size:12px;color:#666;">
+        Demo credentials → <strong>investor</strong> / <strong>tesla2026</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <header>
+      <div class="logo">TESLA <span>PORTFOLIO</span> <small style="font-size:11px;color:#666;margin-left:8px;">DEMO</small></div>
+      <div class="user-info">
+        <span>Welcome, <strong id="user-name">Investor</strong></span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Live Prices -->
+      <div class="prices">
+        <div class="price-card">
+          <div>
+            <h3>TESLA (TSLA)</h3>
+            <div class="value" id="tsla-price">Loading...</div>
+            <div class="change" id="tsla-change">—</div>
+          </div>
+          <div style="font-size:32px;">⚡</div>
+        </div>
+        <div class="price-card">
+          <div>
+            <h3>Bitcoin (BTC)</h3>
+            <div class="value" id="btc-price">Loading...</div>
+            <div class="change" id="btc-change">—</div>
+          </div>
+          <div style="font-size:32px;">₿</div>
+        </div>
+      </div>
+
+      <!-- Portfolio -->
+      <div class="portfolio-grid">
+        <div class="card">
+          <h2>Your Holdings</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Shares</th>
+                <th>Avg Cost</th>
+                <th>Current Value</th>
+                <th>P/L</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>TSLA</strong></td>
+                <td>150</td>
+                <td>$248.50</td>
+                <td id="holding-value">—</td>
+                <td id="holding-pl">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Portfolio Summary</h2>
+          <div class="stat">
+            <label>Total Portfolio Value</label>
+            <div class="num" id="total-value">—</div>
+          </div>
+          <div class="stat">
+            <label>Unrealized P/L</label>
+            <div class="num" id="total-pl">—</div>
+          </div>
+          <div class="stat">
+            <label>Cash Balance</label>
+            <div class="num">$12,450.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card" style="margin-bottom:32px;">
+        <h2>TSLA Performance (Demo)</h2>
+        <canvas id="chart" height="100"></canvas>
+      </div>
+
+      <!-- Support -->
+      <div class="support">
+        <h2 style="margin-bottom:12px;">Contact Support</h2>
+        <p>Need help with your demo account?</p>
+        <p style="margin-top:8px;">
+          Email: <a href="mailto:support@tesla-portfolio-demo.com">support@tesla-portfolio-demo.com</a><br>
+          Hours: Mon–Fri 9:00 AM – 6:00 PM WAT
+        </p>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="disclaimer">
+        <strong>IMPORTANT DISCLAIMER</strong><br><br>
+        This is a <strong>DEMO</strong> application only. It is not affiliated with, endorsed by, or connected to Tesla, Inc. in any way.<br><br>
+        All portfolio data, holdings, and performance figures are fictional and for demonstration purposes only.<br>
+        Live prices are sourced from public APIs and may be delayed. This is <strong>not financial advice</strong>. Do not use this application for real investment decisions.<br><br>
+        Investing in stocks and cryptocurrencies involves significant risk of loss.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple auth
+    function login() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      if (user === 'investor' && pass === 'tesla2026') {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('user-name').textContent = user.charAt(0).toUpperCase() + user.slice(1);
+        loadPrices();
+        initChart();
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    }
+
+    function logout() {
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('login-error').style.display = 'none';
+    }
+
+    // Live prices
+    async function loadPrices() {
+      // BTC from CoinGecko (free, no key)
+      try {
+        const btcRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+        const btcData = await btcRes.json();
+        const btcPrice = btcData.bitcoin.usd;
+        const btcChange = btcData.bitcoin.usd_24h_change;
+        document.getElementById('btc-price').textContent = '$' + btcPrice.toLocaleString(undefined, {maximumFractionDigits: 0});
+        const btcEl = document.getElementById('btc-change');
+        btcEl.textContent = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '% (24h)';
+        btcEl.className = 'change ' + (btcChange >= 0 ? 'up' : 'down');
+      } catch (e) {
+        document.getElementById('btc-price').textContent = 'N/A';
+      }
+
+      // TSLA - try public endpoint, fallback to realistic demo value
+      let tslaPrice = 348.50; // fallback
+      try {
+        // Using a free public source that often works
+        const tslaRes = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=1d');
+        const tslaData = await tslaRes.json();
+        if (tslaData.chart && tslaData.chart.result) {
+          tslaPrice = tslaData.chart.result[0].meta.regularMarketPrice;
+        }
+      } catch (e) {
+        // keep fallback
+      }
+
+      document.getElementById('tsla-price').textContent = '$' + tslaPrice.toFixed(2);
+      document.getElementById('tsla-change').textContent = 'Live / Demo feed';
+      document.getElementById('tsla-change').className = 'change';
+
+      // Update portfolio with 150 shares
+      const shares = 150;
+      const avgCost = 248.50;
+      const currentValue = shares * tslaPrice;
+      const pl = currentValue - (shares * avgCost);
+      const plPercent = (pl / (shares * avgCost)) * 100;
+
+      document.getElementById('holding-value').textContent = '$' + currentValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById('holding-pl').innerHTML = 
+        `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined,{maximumFractionDigits:0})} (${plPercent.toFixed(1)}%)</span>`;
+      document.getElementById('total-value').textContent = '$' + (currentValue + 12450).toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById('total-pl').innerHTML = 
+        `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined,{maximumFractionDigits:0})}</span>`;
+    }
+
+    // Simple chart
+    function initChart() {
+      const ctx = document.getElementById('chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+          datasets: [{
+            label: 'TSLA Price',
+            data: [210, 245, 265, 290, 275, 310, 340, 325, 355, 348],
+            borderColor: '#e31937',
+            backgroundColor: 'rgba(227,25,55,0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#888' }, grid: { color: '#222' } },
+            y: { ticks: { color: '#888' }, grid: { color: '#222' } }
+          }
+        }
+      });
+    }
+
+    // Allow Enter key
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+        login();
+      }
+    });
+  </script>
+</body>
+</html>
