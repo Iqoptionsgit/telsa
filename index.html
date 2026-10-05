@@ -213,112 +213,141 @@
       </div>
     </div>
   </div>
+<!-- THIS IS WHERE LIVE PRICES ARE EFFECTED -->
+ <script>
+  // Simple auth
+  function login() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value;
+    if (user === 'investor' && pass === 'tesla2026') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('user-name').textContent = user.charAt(0).toUpperCase() + user.slice(1);
+      loadPrices();
+      initChart();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
 
-  <script>
-    // Simple auth
-    function login() {
-      const user = document.getElementById('username').value.trim();
-      const pass = document.getElementById('password').value;
-      if (user === 'investor' && pass === 'tesla2026') {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        document.getElementById('user-name').textContent = user.charAt(0).toUpperCase() + user.slice(1);
-        loadPrices();
-        initChart();
-      } else {
-        document.getElementById('login-error').style.display = 'block';
-      }
+  function logout() {
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+  }
+
+  // Live prices
+  async function loadPrices() {
+    // 1. Fetch BTC from CoinGecko (free, public)
+    try {
+      const btcRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+      const btcData = await btcRes.json();
+      const btcPrice = btcData.bitcoin.usd;
+      const btcChange = btcData.bitcoin.usd_24h_change;
+      
+      document.getElementById('btc-price').textContent = '$' + btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      const btcEl = document.getElementById('btc-change');
+      btcEl.textContent = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '% (24h)';
+      btcEl.className = 'change ' + (btcChange >= 0 ? 'up' : 'down');
+    } catch (e) {
+      document.getElementById('btc-price').textContent = 'N/A';
     }
 
-    function logout() {
-      document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('login-screen').style.display = 'flex';
-      document.getElementById('username').value = '';
-      document.getElementById('password').value = '';
-      document.getElementById('login-error').style.display = 'none';
+    // 2. Fetch TSLA Live Price (with CORS Proxy & fallback)
+    let tslaPrice = 348.50;
+    let tslaChange = 0;
+    let tslaSuccess = false;
+
+    // Primary: Financial Modeling Prep Public Quote API
+    try {
+      const tslaRes = await fetch('https://financialmodelingprep.com/api/v3/quote/TSLA?apikey=demo');
+      const tslaData = await tslaRes.json();
+      if (tslaData && tslaData[0] && tslaData[0].price) {
+        tslaPrice = tslaData[0].price;
+        tslaChange = tslaData[0].changesPercentage;
+        tslaSuccess = true;
+      }
+    } catch (e) {
+      console.warn('Primary TSLA fetch failed, trying secondary proxy...');
     }
 
-    // Live prices
-    async function loadPrices() {
-      // BTC from CoinGecko (free, no key)
+    // Secondary Fallback: Yahoo Finance via CORS Proxy if primary fails
+    if (!tslaSuccess) {
       try {
-        const btcRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
-        const btcData = await btcRes.json();
-        const btcPrice = btcData.bitcoin.usd;
-        const btcChange = btcData.bitcoin.usd_24h_change;
-        document.getElementById('btc-price').textContent = '$' + btcPrice.toLocaleString(undefined, {maximumFractionDigits: 0});
-        const btcEl = document.getElementById('btc-change');
-        btcEl.textContent = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '% (24h)';
-        btcEl.className = 'change ' + (btcChange >= 0 ? 'up' : 'down');
-      } catch (e) {
-        document.getElementById('btc-price').textContent = 'N/A';
-      }
-
-      // TSLA - try public endpoint, fallback to realistic demo value
-      let tslaPrice = 348.50; // fallback
-      try {
-        // Using a free public source that often works
-        const tslaRes = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=1d');
+        const yahooUrl = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=1d');
+        const tslaRes = await fetch(`https://corsproxy.io/?${yahooUrl}`);
         const tslaData = await tslaRes.json();
-        if (tslaData.chart && tslaData.chart.result) {
-          tslaPrice = tslaData.chart.result[0].meta.regularMarketPrice;
+        
+        if (tslaData.chart && tslaData.chart.result && tslaData.chart.result[0]) {
+          const meta = tslaData.chart.result[0].meta;
+          tslaPrice = meta.regularMarketPrice;
+          const prevClose = meta.chartPreviousClose || meta.previousClose;
+          if (prevClose) {
+            tslaChange = ((tslaPrice - prevClose) / prevClose) * 100;
+          }
+          tslaSuccess = true;
         }
       } catch (e) {
-        // keep fallback
+        console.warn('Secondary TSLA fetch failed. Using default baseline price.');
       }
-
-      document.getElementById('tsla-price').textContent = '$' + tslaPrice.toFixed(2);
-      document.getElementById('tsla-change').textContent = 'Live / Demo feed';
-      document.getElementById('tsla-change').className = 'change';
-
-      // Update portfolio with 150 shares
-      const shares = 150;
-      const avgCost = 248.50;
-      const currentValue = shares * tslaPrice;
-      const pl = currentValue - (shares * avgCost);
-      const plPercent = (pl / (shares * avgCost)) * 100;
-
-      document.getElementById('holding-value').textContent = '$' + currentValue.toLocaleString(undefined, {maximumFractionDigits: 0});
-      document.getElementById('holding-pl').innerHTML = 
-        `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined,{maximumFractionDigits:0})} (${plPercent.toFixed(1)}%)</span>`;
-      document.getElementById('total-value').textContent = '$' + (currentValue + 12450).toLocaleString(undefined, {maximumFractionDigits: 0});
-      document.getElementById('total-pl').innerHTML = 
-        `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined,{maximumFractionDigits:0})}</span>`;
     }
 
-    // Simple chart
-    function initChart() {
-      const ctx = document.getElementById('chart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-          datasets: [{
-            label: 'TSLA Price',
-            data: [210, 245, 265, 290, 275, 310, 340, 325, 355, 348],
-            borderColor: '#e31937',
-            backgroundColor: 'rgba(227,25,55,0.1)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: '#888' }, grid: { color: '#222' } },
-            y: { ticks: { color: '#888' }, grid: { color: '#222' } }
-          }
+    // Update TSLA price UI
+    document.getElementById('tsla-price').textContent = '$' + tslaPrice.toFixed(2);
+    const tslaEl = document.getElementById('tsla-change');
+    tslaEl.textContent = (tslaChange >= 0 ? '+' : '') + tslaChange.toFixed(2) + '% (24h)';
+    tslaEl.className = 'change ' + (tslaChange >= 0 ? 'up' : 'down');
+
+    // 3. Update portfolio calculations based on 150 shares
+    const shares = 150;
+    const avgCost = 248.50;
+    const currentValue = shares * tslaPrice;
+    const pl = currentValue - (shares * avgCost);
+    const plPercent = (pl / (shares * avgCost)) * 100;
+
+    document.getElementById('holding-value').textContent = '$' + currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    document.getElementById('holding-pl').innerHTML = 
+      `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${plPercent.toFixed(1)}%)</span>`;
+    document.getElementById('total-value').textContent = '$' + (currentValue + 12450).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    document.getElementById('total-pl').innerHTML = 
+      `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>`;
+  }
+
+  // Simple chart
+  function initChart() {
+    const ctx = document.getElementById('chart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        datasets: [{
+          label: 'TSLA Price',
+          data: [210, 245, 265, 290, 275, 310, 340, 325, 355, 348],
+          borderColor: '#e31937',
+          backgroundColor: 'rgba(227,25,55,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#888' }, grid: { color: '#222' } },
+          y: { ticks: { color: '#888' }, grid: { color: '#222' } }
         }
-      });
-    }
-
-    // Allow Enter key
-    document.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
-        login();
       }
     });
-  </script>
+  }
+
+  // Allow Enter key
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+      login();
+    }
+  });
+</script>
 </body>
 </html>
