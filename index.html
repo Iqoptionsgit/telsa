@@ -4,333 +4,458 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tesla Investment Portfolio | Live</title>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            teslaRed: '#e31937',
+            teslaRedHover: '#c41230',
+            darkBg: '#0a0a0a',
+            cardBg: '#141414',
+            borderDark: '#222222',
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     body { background: #0a0a0a; color: #fff; min-height: 100vh; }
-
-    /* Login */
-    #login-screen {
-      display: flex; justify-content: center; align-items: center;
-      min-height: 100vh; background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
-    }
-    .login-box {
-      background: #141414; border: 1px solid #333; border-radius: 16px;
-      padding: 48px 40px; width: 100%; max-width: 420px; text-align: center;
-    }
-    .login-box h1 { font-size: 28px; margin-bottom: 8px; letter-spacing: 1px; }
-    .login-box .sub { color: #888; margin-bottom: 32px; font-size: 14px; }
-    .login-box input {
-      width: 100%; padding: 14px 16px; margin-bottom: 16px;
-      background: #0a0a0a; border: 1px solid #333; border-radius: 8px;
-      color: #fff; font-size: 15px;
-    }
-    .login-box input:focus { outline: none; border-color: #e31937; }
-    .login-box button {
-      width: 100%; padding: 14px; background: #e31937; color: white;
-      border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
-      cursor: pointer; transition: 0.2s;
-    }
-    .login-box button:hover { background: #c41230; }
-    .error { color: #ff4d4d; font-size: 13px; margin-top: 12px; display: none; }
-
-    /* Dashboard */
-    #dashboard { display: none; }
-    header {
-      background: #111; border-bottom: 1px solid #222;
-      padding: 16px 32px; display: flex; justify-content: space-between; align-items: center;
-    }
-    .logo { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-    .logo span { color: #e31937; }
-    .user-info { display: flex; align-items: center; gap: 16px; }
-    .logout-btn {
-      background: transparent; border: 1px solid #444; color: #ccc;
-      padding: 8px 16px; border-radius: 6px; cursor: pointer;
-    }
-    .logout-btn:hover { border-color: #e31937; color: #fff; }
-
-    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
-
-    .prices {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px;
-    }
-    .price-card {
-      background: #141414; border: 1px solid #222; border-radius: 12px;
-      padding: 24px; display: flex; justify-content: space-between; align-items: center;
-    }
-    .price-card h3 { font-size: 14px; color: #888; margin-bottom: 4px; }
-    .price-card .value { font-size: 28px; font-weight: 700; }
-    .change { font-size: 14px; margin-top: 4px; }
-    .up { color: #00c853; } .down { color: #ff4d4d; }
-
-    .portfolio-grid {
-      display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px;
-    }
-    .card {
-      background: #141414; border: 1px solid #222; border-radius: 12px; padding: 24px;
-    }
-    .card h2 { font-size: 18px; margin-bottom: 20px; }
-    .stat { margin-bottom: 16px; }
-    .stat label { display: block; color: #888; font-size: 13px; margin-bottom: 4px; }
-    .stat .num { font-size: 22px; font-weight: 600; }
-
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #222; }
-    th { color: #888; font-size: 13px; font-weight: 500; }
-
-    .support {
-      background: #141414; border: 1px solid #222; border-radius: 12px;
-      padding: 24px; margin-bottom: 32px;
-    }
-    .support a { color: #e31937; text-decoration: none; }
-
-    .disclaimer {
-      background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
-      padding: 20px; font-size: 13px; color: #999; line-height: 1.6;
-    }
-    .disclaimer strong { color: #e31937; }
-
-    @media (max-width: 768px) {
-      .prices, .portfolio-grid { grid-template-columns: 1fr; }
-      header { flex-direction: column; gap: 12px; }
-    }
+    .up { color: #00c853; } 
+    .down { color: #ff4d4d; }
+    
+    /* Custom Scrollbar for Modals */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #141414; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #e31937; }
   </style>
 </head>
-<body>
+<body class="bg-darkBg text-white antialiased">
 
   <!-- LOGIN SCREEN -->
-  <div id="login-screen">
-    <div class="login-box">
-      <h1>TESLA <span style="color:#e31937">PORTFOLIO</span></h1>
-      <p class="sub">Secure Investment Dashboard • Peter Kan </p>
-      <input type="text" id="username" placeholder="Username" />
-      <input type="password" id="password" placeholder="Password" />
-      <button onclick="login()">Sign In</button>
-      <p class="error" id="login-error">Invalid username or password</p>
-      <p style="margin-top:24px;font-size:12px;color:#666;">
-        Demo credentials → <strong>investor</strong> / <strong>tesla2026</strong>
-      </p>
+  <div id="login-screen" class="flex justify-center items-center min-h-screen bg-gradient-to-br from-black via-darkBg to-zinc-900 p-4">
+    <div class="bg-cardBg border border-zinc-800 rounded-2xl p-8 sm:p-12 w-full max-w-md text-center shadow-2xl">
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-wider mb-2">TESLA <span class="text-teslaRed">PORTFOLIO</span></h1>
+      <p class="text-zinc-400 mb-8 text-sm">Secure Investment Dashboard • Peter Kan</p>
+      
+      <div class="space-y-4">
+        <input type="text" id="username" placeholder="Username" 
+          class="w-full px-4 py-3 bg-black border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-teslaRed transition" />
+        <input type="password" id="password" placeholder="Password" 
+          class="w-full px-4 py-3 bg-black border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-teslaRed transition" />
+        <button onclick="login()" 
+          class="w-full py-3 bg-teslaRed hover:bg-teslaRedHover text-white font-semibold rounded-lg text-base transition shadow-lg shadow-teslaRed/20">
+          Sign In
+        </button>
+      </div>
+      
+      <p class="text-red-500 text-xs mt-3 hidden" id="login-error">Invalid username or password</p>
+      
+      <div class="mt-8 pt-6 border-t border-zinc-900 text-xs text-zinc-500">
+        Demo credentials → <strong class="text-zinc-300">investor</strong> / <strong class="text-zinc-300">tesla2026</strong>
+      </div>
     </div>
   </div>
 
   <!-- DASHBOARD -->
-  <div id="dashboard">
-    <header>
-      <div class="logo">TESLA <span>PORTFOLIO</span> <small style="font-size:11px;color:#666;margin-left:8px;">live</small></div>
-      <div class="user-info">
-        <span>Welcome, <strong id="user-name">Investor</strong></span>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+  <div id="dashboard" class="hidden min-h-screen flex flex-col">
+    <header class="bg-zinc-950 border-b border-zinc-800 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="text-xl font-bold tracking-wider">
+        TESLA <span class="text-teslaRed">PORTFOLIO</span>
+        <span class="text-xs text-zinc-500 font-normal ml-2 tracking-normal bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">live</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <span class="text-zinc-300">Welcome, <strong id="user-name" class="text-white">Investor</strong></span>
+        <button onclick="logout()" class="border border-zinc-700 hover:border-teslaRed text-zinc-300 hover:text-white px-4 py-1.5 rounded-md transition text-xs font-medium">
+          Logout
+        </button>
       </div>
     </header>
 
-    <div class="container">
-      <!-- Live Prices -->
-      <div class="prices">
-        <div class="price-card">
+    <div class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 space-y-8">
+      
+      <!-- Top Cards Row: Net Deposit & Bitcoin Live Ticker -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Net Deposit Card + Actions -->
+        <div class="bg-cardBg border border-zinc-800 rounded-xl p-6 flex flex-col justify-between shadow-lg relative overflow-hidden">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Net Deposit</h3>
+              <div class="text-3xl font-extrabold text-white" id="net-deposit-val">$49,725.00</div>
+              <div class="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                <span>✓ Status: Active & Verified</span>
+              </div>
+            </div>
+            <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-2xl text-teslaRed">
+              💳
+            </div>
+          </div>
+          
+          <!-- Deposit / Withdrawal Action Buttons -->
+          <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-zinc-900">
+            <button onclick="openModal('deposit-modal')" class="w-full py-2.5 bg-teslaRed hover:bg-teslaRedHover text-white font-semibold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md shadow-teslaRed/10">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              Deposit
+            </button>
+            <button onclick="openModal('withdraw-modal')" class="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white font-semibold rounded-lg text-sm transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+              Withdrawal
+            </button>
+          </div>
+        </div>
+
+        <!-- Live BTC Price Card -->
+        <div class="bg-cardBg border border-zinc-800 rounded-xl p-6 flex justify-between items-start shadow-lg">
           <div>
-            <h3>TESLA (TSLA)</h3>
-            <div class="value" id="tsla-price">Loading...</div>
-            <div class="change" id="tsla-change">—</div>
+            <h3 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Bitcoin (BTC)</h3>
+            <div class="text-3xl font-extrabold text-white" id="btc-price">Loading...</div>
+            <div class="text-sm mt-2 font-medium" id="btc-change">—</div>
+            <div class="text-xs text-zinc-500 mt-3">Live CoinGecko Data Feed</div>
           </div>
-          <div style="font-size:32px;">⚡</div>
+          <div class="p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-3xl text-amber-500">
+            ₿
+          </div>
         </div>
-        <div class="price-card">
+
+      </div>
+
+      <!-- Portfolio Breakdown Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Holdings Table -->
+        <div class="lg:col-span-2 bg-cardBg border border-zinc-800 rounded-xl p-6 shadow-lg">
+          <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <span>Your Holdings</span>
+          </h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-zinc-800 text-zinc-400 text-xs uppercase tracking-wider">
+                  <th class="py-3 px-2">Asset</th>
+                  <th class="py-3 px-2">Shares</th>
+                  <th class="py-3 px-2">Avg Cost</th>
+                  <th class="py-3 px-2">Est. Value</th>
+                  <th class="py-3 px-2 text-right">P/L</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-900">
+                <tr>
+                  <td class="py-4 px-2 font-bold text-white flex items-center gap-2">
+                    <span class="w-7 h-7 bg-teslaRed/20 text-teslaRed rounded-full flex items-center justify-center text-xs font-extrabold">⚡</span>
+                    TSLA Equity
+                  </td>
+                  <td class="py-4 px-2 text-zinc-300">150</td>
+                  <td class="py-4 px-2 text-zinc-300">$248.50</td>
+                  <td class="py-4 px-2 font-medium text-white" id="holding-value">$52,275.00</td>
+                  <td class="py-4 px-2 text-right font-semibold" id="holding-pl">
+                    <span class="up">+$15,000.00 (+40.2%)</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Summary Panel -->
+        <div class="bg-cardBg border border-zinc-800 rounded-xl p-6 shadow-lg flex flex-col justify-between">
           <div>
-            <h3>Bitcoin (BTC)</h3>
-            <div class="value" id="btc-price">Loading...</div>
-            <div class="change" id="btc-change">—</div>
+            <h2 class="text-lg font-bold text-white mb-4">Portfolio Summary</h2>
+            <div class="space-y-4">
+              <div class="p-3 bg-zinc-950 border border-zinc-900 rounded-lg">
+                <label class="block text-xs text-zinc-400 font-medium mb-1">Total Portfolio Value</label>
+                <div class="text-2xl font-black text-white" id="total-value">$64,725.00</div>
+              </div>
+              <div class="p-3 bg-zinc-950 border border-zinc-900 rounded-lg">
+                <label class="block text-xs text-zinc-400 font-medium mb-1">Unrealized P/L</label>
+                <div class="text-xl font-bold" id="total-pl">
+                  <span class="up">+$15,000.00</span>
+                </div>
+              </div>
+              <div class="p-3 bg-zinc-950 border border-zinc-900 rounded-lg">
+                <label class="block text-xs text-zinc-400 font-medium mb-1">Cash Balance</label>
+                <div class="text-xl font-bold text-zinc-200">$12,450.00</div>
+              </div>
+            </div>
           </div>
-          <div style="font-size:32px;">₿</div>
+        </div>
+
+      </div>
+
+      <!-- Historical Chart Section -->
+      <div class="bg-cardBg border border-zinc-800 rounded-xl p-6 shadow-lg">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
+          <h2 class="text-lg font-bold text-white">TSLA Performance History</h2>
+          <span class="text-xs text-zinc-400">10-Month Performance Trend</span>
+        </div>
+        <div class="w-full relative h-64 sm:h-80">
+          <canvas id="chart"></canvas>
         </div>
       </div>
 
-      <!-- Portfolio -->
-      <div class="portfolio-grid">
-        <div class="card">
-          <h2>Your Holdings</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Asset</th>
-                <th>Shares</th>
-                <th>Avg Cost</th>
-                <th>Current Value</th>
-                <th>P/L</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>TSLA</strong></td>
-                <td>150</td>
-                <td>$248.50</td>
-                <td id="holding-value">—</td>
-                <td id="holding-pl">—</td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- Support Section -->
+      <div class="bg-cardBg border border-zinc-800 rounded-xl p-6 shadow-lg">
+        <h2 class="text-lg font-bold text-white mb-2">Contact Support</h2>
+        <p class="text-sm text-zinc-400">Need assistance with your account, deposits, or withdrawals?</p>
+        <div class="mt-4 pt-4 border-t border-zinc-900 text-sm space-y-1">
+          <p class="text-zinc-300">Email: <a href="mailto:support@tesla-portfolio-demo.com" class="text-teslaRed hover:underline">support@tesla-portfolio-demo.com</a></p>
+          <p class="text-zinc-400 text-xs">Hours: Mon–Fri 9:00 AM – 6:00 PM WAT</p>
         </div>
-
-        <div class="card">
-          <h2>Portfolio Summary</h2>
-          <div class="stat">
-            <label>Total Portfolio Value</label>
-            <div class="num" id="total-value">—</div>
-          </div>
-          <div class="stat">
-            <label>Unrealized P/L</label>
-            <div class="num" id="total-pl">—</div>
-          </div>
-          <div class="stat">
-            <label>Cash Balance</label>
-            <div class="num">$12,450.00</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chart -->
-      <div class="card" style="margin-bottom:32px;">
-        <h2>TSLA Performance </h2>
-        <canvas id="chart" height="100"></canvas>
-      </div>
-
-      <!-- Support -->
-      <div class="support">
-        <h2 style="margin-bottom:12px;">Contact Support</h2>
-        <p>Need help with your  account?</p>
-        <p style="margin-top:8px;">
-          Email: <a href="mailto:support@tesla-portfolio-demo.com">support@tesla-portfolio-demo.com</a><br>
-          Hours: Mon–Fri 9:00 AM – 6:00 PM WAT
-        </p>
       </div>
 
       <!-- Disclaimer -->
-      <div class="disclaimer">
-        <strong>IMPORTANT DISCLAIMER</strong><br><br>
+      <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-6 text-xs text-zinc-400 leading-relaxed shadow-lg">
+        <strong class="text-teslaRed font-semibold block text-sm mb-2">IMPORTANT DISCLAIMER</strong>
         This is a <strong>DEMO</strong> application only. It is not affiliated with, endorsed by, or connected to Tesla, Inc. in any way.<br><br>
-        All portfolio data, holdings, and performance figures are fictional and for demonstration purposes only.<br>
-        Live prices are sourced from public APIs and may be delayed. This is <strong>not financial advice</strong>. Do not use this application for real investment decisions.<br><br>
+        All portfolio data, holdings, deposits, and performance figures are fictional and for demonstration purposes only.
+        Live cryptocurrency prices are sourced from public APIs and may be delayed. This is <strong>not financial advice</strong>. Do not use this application for real investment decisions.<br><br>
         Investing in stocks and cryptocurrencies involves significant risk of loss.
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DEPOSIT MODAL -->
+  <div id="deposit-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4">
+    <div class="bg-cardBg border border-zinc-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+      <!-- Close Button -->
+      <button onclick="closeModal('deposit-modal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white p-2 rounded-lg text-lg">✕</button>
+      
+      <h2 class="text-xl font-bold text-white mb-1">Make a Deposit</h2>
+      <p class="text-xs text-zinc-400 mb-6">Select your preferred deposit method below to top up your account balance.</p>
+
+      <!-- Deposit Tabs -->
+      <div class="flex border-b border-zinc-800 mb-6">
+        <button id="tab-crypto-btn" onclick="switchDepositTab('crypto')" class="flex-1 py-3 text-sm font-semibold border-b-2 border-teslaRed text-teslaRed">
+          Crypto Deposit
+        </button>
+        <button id="tab-bank-btn" onclick="switchDepositTab('bank')" class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-white">
+          Bank Deposit
+        </button>
+      </div>
+
+      <!-- Crypto Content -->
+      <div id="deposit-crypto-content" class="space-y-4">
+        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+          <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider">Bitcoin (BTC) Deposit Address</label>
+          <div class="flex items-center gap-2 bg-black border border-zinc-800 p-3 rounded-lg">
+            <input type="text" readonly id="crypto-address-input" value="Bc1yusisfhdjkshjffdknvfdjnjdfh5tesdfhjjffn" class="bg-transparent text-xs text-emerald-400 font-mono w-full focus:outline-none select-all" />
+            <button onclick="copyCryptoAddress()" id="copy-btn" class="bg-teslaRed hover:bg-teslaRedHover text-white text-xs font-semibold px-3 py-1.5 rounded-md transition whitespace-nowrap">
+              Copy
+            </button>
+          </div>
+          <p id="copy-toast" class="text-emerald-400 text-xs mt-2 hidden text-right">Copied to clipboard!</p>
+        </div>
+
+        <div class="p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl text-xs text-zinc-300 space-y-2">
+          <p class="font-medium text-white">📌 Deposit Instructions:</p>
+          <ul class="list-disc pl-4 space-y-1 text-zinc-400">
+            <li>Send only Bitcoin (BTC) to this deposit address.</li>
+            <li>Deposits require 3 network confirmations before reflect.</li>
+            <li>Double-check address before initiating transaction.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bank Content -->
+      <div id="deposit-bank-content" class="hidden space-y-4 text-center py-6">
+        <div class="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mx-auto text-2xl text-teslaRed mb-2">
+          🏛️
+        </div>
+        <h3 class="text-base font-bold text-white">Bank Transfer Wire</h3>
+        <p class="text-sm text-zinc-300 bg-zinc-950 border border-zinc-800 p-4 rounded-xl font-medium">
+          "Please contact admin for details"
+        </p>
+        <p class="text-xs text-zinc-500">
+          Direct wire instructions will be provided by your designated portfolio representative after account verification.
+        </p>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-zinc-900 flex justify-end">
+        <button onclick="closeModal('deposit-modal')" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm transition font-medium">
+          Close
+        </button>
       </div>
     </div>
   </div>
-<!-- THIS IS WHERE LIVE PRICES ARE EFFECTED -->
- <script>
-  // Demo credentials
-  function login() {
-    const user = document.getElementById('username').value.trim();
-    const pass = document.getElementById('password').value;
-    if (user === 'investor' && pass === 'tesla2026') {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      document.getElementById('user-name').textContent = user.charAt(0).toUpperCase() + user.slice(1);
-      loadPrices();
-      initChart();
-      // Refresh prices every 60 seconds
-      setInterval(loadPrices, 60000);
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-    }
-  }
 
-  function logout() {
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
-    document.getElementById('login-error').style.display = 'none';
-  }
+  <!-- WITHDRAWAL MODAL -->
+  <div id="withdraw-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4">
+    <div class="bg-cardBg border border-zinc-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 relative shadow-2xl">
+      <button onclick="closeModal('withdraw-modal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white p-2 rounded-lg text-lg">✕</button>
+      
+      <h2 class="text-xl font-bold text-white mb-1">Request Withdrawal</h2>
+      <p class="text-xs text-zinc-400 mb-6">Submit a request to withdraw funds from your cash balance ($12,450.00 available).</p>
 
-  async function loadPrices() {
-    // ===== BTC (CoinGecko - works well) =====
-    try {
-      const btcRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
-      const btcData = await btcRes.json();
-      const btcPrice = btcData.bitcoin.usd;
-      const btcChange = btcData.bitcoin.usd_24h_change;
+      <form onsubmit="handleWithdrawal(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Withdrawal Amount ($)</label>
+          <input type="number" required max="12450" min="10" placeholder="e.g. 5000" class="w-full px-4 py-2.5 bg-black border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-teslaRed text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Receiving Account / Wallet Details</label>
+          <textarea required rows="3" placeholder="Enter bank routing/account details or BTC wallet address" class="w-full px-4 py-2.5 bg-black border border-zinc-800 rounded-lg text-white focus:outline-none focus:border-teslaRed text-sm"></textarea>
+        </div>
 
-      document.getElementById('btc-price').textContent = '$' + btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 });
-      const btcEl = document.getElementById('btc-change');
-      btcEl.textContent = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '% (24h)';
-      btcEl.className = 'change ' + (btcChange >= 0 ? 'up' : 'down');
-    } catch (e) {
-      document.getElementById('btc-price').textContent = 'N/A';
-    }
+        <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-300">
+          <strong>Note:</strong> Withdrawals are processed within 24–48 hours. For urgent requests, please contact your account manager directly.
+        </div>
 
-    // ===== TSLA (Yahoo Finance via free CORS proxy) =====
-    let tslaPrice = 348.50; // fallback
-    let tslaChange = 0;
+        <div id="withdraw-success" class="hidden p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs">
+          Request submitted successfully! An administrator will contact you shortly.
+        </div>
 
-    try {
-      const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=5d';
-      const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(yahooUrl));
-      const data = await res.json();
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal('withdraw-modal')" class="px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-sm hover:bg-zinc-700">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-teslaRed hover:bg-teslaRedHover text-white rounded-lg text-sm font-semibold transition">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-      if (data.chart && data.chart.result && data.chart.result[0]) {
-        const meta = data.chart.result[0].meta;
-        tslaPrice = meta.regularMarketPrice || meta.previousClose;
-        const prevClose = meta.chartPreviousClose || meta.previousClose;
-        if (prevClose) {
-          tslaChange = ((tslaPrice - prevClose) / prevClose) * 100;
-        }
+  <!-- APPLICATION SCRIPT -->
+  <script>
+    // Demo credentials check
+    function login() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      if (user === 'investor' && pass === 'tesla2026') {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('user-name').textContent = user.charAt(0).toUpperCase() + user.slice(1);
+        loadBtcPrice();
+        initChart();
+        setInterval(loadBtcPrice, 60000);
+      } else {
+        document.getElementById('login-error').style.display = 'block';
       }
-    } catch (e) {
-      console.warn('TSLA fetch failed, using fallback price');
     }
 
-    // Update TSLA UI
-    document.getElementById('tsla-price').textContent = '$' + tslaPrice.toFixed(2);
-    const tslaEl = document.getElementById('tsla-change');
-    tslaEl.textContent = (tslaChange >= 0 ? '+' : '') + tslaChange.toFixed(2) + '% (24h)';
-    tslaEl.className = 'change ' + (tslaChange >= 0 ? 'up' : 'down');
+    function logout() {
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('login-error').style.display = 'none';
+    }
 
-    // Update portfolio (150 shares @ $248.50 avg)
-    const shares = 150;
-    const avgCost = 248.50;
-    const currentValue = shares * tslaPrice;
-    const pl = currentValue - (shares * avgCost);
-    const plPercent = (pl / (shares * avgCost)) * 100;
+    // Live BTC Ticker via CoinGecko API
+    async function loadBtcPrice() {
+      try {
+        const btcRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+        const btcData = await btcRes.json();
+        const btcPrice = btcData.bitcoin.usd;
+        const btcChange = btcData.bitcoin.usd_24h_change;
 
-    document.getElementById('holding-value').textContent = '$' + currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
-    document.getElementById('holding-pl').innerHTML =
-      `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${plPercent.toFixed(1)}%)</span>`;
+        document.getElementById('btc-price').textContent = '$' + btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 });
+        const btcEl = document.getElementById('btc-change');
+        btcEl.textContent = (btcChange >= 0 ? '+' : '') + btcChange.toFixed(2) + '% (24h)';
+        btcEl.className = 'text-sm font-medium ' + (btcChange >= 0 ? 'up' : 'down');
+      } catch (e) {
+        document.getElementById('btc-price').textContent = '$88,450';
+        document.getElementById('btc-change').textContent = '+2.15% (24h)';
+        document.getElementById('btc-change').className = 'text-sm font-medium up';
+      }
+    }
 
-    document.getElementById('total-value').textContent = '$' + (currentValue + 12450).toLocaleString(undefined, { maximumFractionDigits: 0 });
-    document.getElementById('total-pl').innerHTML =
-      `<span class="${pl >= 0 ? 'up' : 'down'}">$${pl.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>`;
-  }
+    // Modal Control Functions
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
 
-  function initChart() {
-    const ctx = document.getElementById('chart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-        datasets: [{
-          label: 'TSLA Price',
-          data: [210, 245, 265, 290, 275, 310, 340, 325, 355, 348],
-          borderColor: '#e31937',
-          backgroundColor: 'rgba(227,25,55,0.1)',
-          fill: true,
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#888' }, grid: { color: '#222' } },
-          y: { ticks: { color: '#888' }, grid: { color: '#222' } }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Switch between Deposit Options
+    function switchDepositTab(type) {
+      const cryptoBtn = document.getElementById('tab-crypto-btn');
+      const bankBtn = document.getElementById('tab-bank-btn');
+      const cryptoContent = document.getElementById('deposit-crypto-content');
+      const bankContent = document.getElementById('deposit-bank-content');
+
+      if (type === 'crypto') {
+        cryptoBtn.className = 'flex-1 py-3 text-sm font-semibold border-b-2 border-teslaRed text-teslaRed';
+        bankBtn.className = 'flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-white';
+        cryptoContent.classList.remove('hidden');
+        bankContent.classList.add('hidden');
+      } else {
+        bankBtn.className = 'flex-1 py-3 text-sm font-semibold border-b-2 border-teslaRed text-teslaRed';
+        cryptoBtn.className = 'flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-zinc-400 hover:text-white';
+        bankContent.classList.remove('hidden');
+        cryptoContent.classList.add('hidden');
+      }
+    }
+
+    // Copy Crypto Address using document.execCommand to avoid iframe issues
+    function copyCryptoAddress() {
+      const input = document.getElementById('crypto-address-input');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      try {
+        document.execCommand('copy');
+        const toast = document.getElementById('copy-toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2500);
+      } catch (err) {
+        console.warn('Fallback copy failed', err);
+      }
+    }
+
+    // Handle withdrawal submission mock
+    function handleWithdrawal(e) {
+      e.preventDefault();
+      const successEl = document.getElementById('withdraw-success');
+      successEl.classList.remove('hidden');
+      setTimeout(() => {
+        successEl.classList.add('hidden');
+        closeModal('withdraw-modal');
+      }, 2500);
+    }
+
+    // Performance Chart Initialization
+    function initChart() {
+      const ctx = document.getElementById('chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+          datasets: [{
+            label: 'TSLA Holding Value',
+            data: [210, 245, 265, 290, 275, 310, 340, 325, 355, 348],
+            borderColor: '#e31937',
+            backgroundColor: 'rgba(227, 25, 55, 0.12)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#71717a' }, grid: { color: '#18181b' } },
+            y: { ticks: { color: '#71717a' }, grid: { color: '#18181b' } }
+          }
         }
+      });
+    }
+
+    // Enter key support for login
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+        login();
       }
     });
-  }
-
-  // Enter key support
-  document.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
-      login();
-    }
-  });
-</script>
+  </script>
 </body>
 </html>
